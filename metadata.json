@@ -1,0 +1,5 @@
+{
+  "name": "OCU-SYNC",
+  "description": "A secure, end-to-end encrypted messaging service for healthcare professionals.",
+  "requestFramePermissions": []
+}

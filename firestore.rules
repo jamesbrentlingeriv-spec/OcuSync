@@ -1,0 +1,162 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (Auth UID)
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - displayName: string
+    //   - photoURL: string
+    //   - publicKey: string
+    //   - createdAt: timestamp
+    //
+    // Collection: conversations
+    // Document ID: conversationId
+    // Fields:
+    //   - participants: list of strings (required)
+    //   - lastMessage: string
+    //   - lastTimestamp: timestamp
+    //   - updatedAt: timestamp
+    //
+    // Collection: conversations/{conversationId}/messages
+    // Document ID: messageId
+    // Fields:
+    //   - senderId: string (required)
+    //   - receiverId: string (required)
+    //   - encryptedContent: string (required)
+    //   - timestamp: timestamp (required)
+    //   - read: bool
+    //   - fileUrl: string
+    //   - fileName: string
+    //   - fileType: string
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && request.auth.token.email == "jamesbrentlingeriv@gmail.com";
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function userExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isMemberOf(orgId) {
+      return isAuthenticated() && (isSuperAdmin() || (userExists() && getUserData().organizationId == orgId));
+    }
+
+    function isOrgAdmin(orgId) {
+      return isMemberOf(orgId) && (isSuperAdmin() || getUserData().role == 'admin');
+    }
+
+    function isApprovedInOrg(orgId) {
+      return isMemberOf(orgId) && (isSuperAdmin() || getUserData().isApproved == true);
+    }
+
+    function isOrgStaff(orgId) {
+      return isApprovedInOrg(orgId) && (isSuperAdmin() || getUserData().role in ['staff', 'admin']);
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isParticipant(orgId, participants) {
+      return isApprovedInOrg(orgId) && (request.auth.uid in participants || isOrgAdmin(orgId));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'isApproved', 'phoneNumber', 'smsConsent', 'organizationId', 'role']) &&
+             data.uid is string && data.uid.size() > 0 &&
+             data.email is string && data.email.size() > 0 &&
+             data.isApproved is bool &&
+             data.phoneNumber is string &&
+             data.smsConsent is bool &&
+             data.organizationId is string &&
+             data.role in ['staff', 'patient', 'admin', 'superadmin'];
+    }
+
+    function isValidOrganization(data) {
+      return data.keys().hasAll(['id', 'name', 'assignedPhoneNumber']) &&
+             data.id is string && data.name is string && data.assignedPhoneNumber is string;
+    }
+
+    function isValidConversation(orgId, data) {
+      return isApprovedInOrg(orgId) &&
+             (!('participants' in data) || (data.participants is list && data.participants.size() == 2 && (request.auth.uid in data.participants || isOrgAdmin(orgId)))) &&
+             (!('deletedBy' in data) || data.deletedBy is list);
+    }
+
+    function isValidMessage(orgId, data) {
+      return isApprovedInOrg(orgId) &&
+             data.keys().hasAll(['senderId', 'receiverId', 'encryptedContent', 'timestamp']) &&
+             data.senderId == request.auth.uid &&
+             data.senderId is string && data.receiverId is string &&
+             data.encryptedContent is string && data.encryptedContent.size() < 10000;
+    }
+
+    function isValidSMSConversation(orgId, data) {
+      return isOrgStaff(orgId) &&
+             data.keys().hasAll(['id', 'phoneNumber', 'updatedAt']) &&
+             data.id is string && data.phoneNumber is string;
+    }
+
+    // Rules
+    match /organizations/{orgId} {
+      allow get: if isAuthenticated();
+      allow list: if isSuperAdmin();
+      allow create: if isSuperAdmin();
+      allow update: if isOrgAdmin(orgId);
+
+      match /conversations/{conversationId} {
+        allow read: if isAuthenticated() && (resource == null || isParticipant(orgId, resource.data.participants));
+        allow create: if isValidConversation(orgId, request.resource.data);
+        allow update: if isParticipant(orgId, resource.data.participants) && isValidConversation(orgId, request.resource.data);
+
+        match /messages/{messageId} {
+          allow read: if isParticipant(orgId, get(/databases/$(database)/documents/organizations/$(orgId)/conversations/$(conversationId)).data.participants);
+          allow create: if isParticipant(orgId, get(/databases/$(database)/documents/organizations/$(orgId)/conversations/$(conversationId)).data.participants) && isValidMessage(orgId, request.resource.data);
+        }
+      }
+
+      match /sms_conversations/{smsConvoId} {
+        allow read: if isOrgStaff(orgId);
+        allow create, update: if isOrgStaff(orgId) && isValidSMSConversation(orgId, request.resource.data);
+
+        match /messages/{messageId} {
+          allow read: if isOrgStaff(orgId);
+          allow create: if isOrgStaff(orgId) && (request.resource.data.senderId == request.auth.uid);
+        }
+      }
+    }
+
+    match /users/{userId} {
+      allow get: if isAuthenticated();
+      allow list: if isAuthenticated(); // Filtered by organizationId in application
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
+                    (request.resource.data.isApproved == false || isSuperAdmin());
+      allow update: if (isOwner(userId) && 
+                        request.resource.data.organizationId == resource.data.organizationId &&
+                        request.resource.data.role == resource.data.role &&
+                        (request.resource.data.isApproved == resource.data.isApproved || isSuperAdmin())) || 
+                    isOrgAdmin(resource.data.organizationId);
+    }
+    
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}

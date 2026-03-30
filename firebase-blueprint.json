@@ -1,0 +1,120 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "description": "User email" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "photoURL": { "type": "string", "description": "User photo URL" },
+        "publicKey": { "type": "string", "description": "User's public encryption key" },
+        "phoneNumber": { "type": "string", "description": "User's phone number" },
+        "smsConsent": { "type": "boolean", "description": "Whether the user has consented to SMS communication" },
+        "role": { "type": "string", "enum": ["staff", "patient", "admin", "superadmin"], "description": "User role" },
+        "organizationId": { "type": "string", "description": "ID of the organization this user belongs to" },
+        "isApproved": { "type": "boolean", "description": "Whether the user has been approved by an admin" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation time" }
+      },
+      "required": ["uid", "email", "role", "organizationId"]
+    },
+    "Organization": {
+      "title": "Organization",
+      "description": "A business or clinic using the platform",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID for the organization" },
+        "name": { "type": "string", "description": "Name of the business" },
+        "assignedPhoneNumber": { "type": "string", "description": "The phone number assigned to this business for SMS" },
+        "address": { "type": "string", "description": "Business address" },
+        "contactEmail": { "type": "string", "description": "Primary contact email" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the organization was created" }
+      },
+      "required": ["id", "name", "assignedPhoneNumber"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "An encrypted message between two users",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string", "description": "UID of the sender" },
+        "receiverId": { "type": "string", "description": "UID of the receiver" },
+        "encryptedContent": { "type": "string", "description": "The message content, encrypted" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the message was sent" },
+        "read": { "type": "boolean", "description": "Whether the message has been read" },
+        "fileUrl": { "type": "string", "description": "URL of the uploaded file" },
+        "fileName": { "type": "string", "description": "Original name of the file" },
+        "fileType": { "type": "string", "description": "MIME type of the file" }
+      },
+      "required": ["senderId", "receiverId", "encryptedContent", "timestamp"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Metadata for a conversation between two users",
+      "type": "object",
+      "properties": {
+        "participants": { "type": "array", "items": { "type": "string" }, "description": "List of participant UIDs" },
+        "lastMessage": { "type": "string", "description": "The last message sent in this conversation" },
+        "lastTimestamp": { "type": "string", "format": "date-time", "description": "Timestamp of the last message" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "When the conversation was last updated" },
+        "deletedBy": { "type": "array", "items": { "type": "string" }, "description": "List of user UIDs who have deleted this conversation" }
+      },
+      "required": ["participants", "updatedAt"]
+    },
+    "SMSConversation": {
+      "title": "SMSConversation",
+      "description": "Metadata for an SMS conversation with a patient",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Formatted phone number" },
+        "phoneNumber": { "type": "string", "description": "The patient's phone number" },
+        "patientName": { "type": "string", "description": "The patient's name" },
+        "lastMessage": { "type": "string", "description": "The last SMS sent" },
+        "lastTimestamp": { "type": "string", "format": "date-time", "description": "When the last SMS was sent" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "When the conversation was last updated" },
+        "deletedBy": { "type": "array", "items": { "type": "string" }, "description": "List of user UIDs who have deleted this conversation" }
+      },
+      "required": ["id", "phoneNumber", "updatedAt"]
+    },
+    "SMSMessage": {
+      "title": "SMSMessage",
+      "description": "A single SMS message sent to a patient",
+      "type": "object",
+      "properties": {
+        "to": { "type": "string", "description": "The recipient phone number" },
+        "content": { "type": "string", "description": "The message content" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the SMS was sent" },
+        "senderId": { "type": "string", "description": "UID of the sender" },
+        "senderEmail": { "type": "string", "description": "Email of the sender" }
+      },
+      "required": ["to", "content", "timestamp", "senderId"]
+    }
+  },
+  "firestore": {
+    "/organizations/{orgId}": {
+      "schema": "Organization",
+      "description": "Organization details"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/organizations/{orgId}/conversations/{conversationId}": {
+      "schema": "Conversation",
+      "description": "Conversation metadata"
+    },
+    "/organizations/{orgId}/conversations/{conversationId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages within a conversation"
+    },
+    "/organizations/{orgId}/sms_conversations/{smsConvoId}": {
+      "schema": "SMSConversation",
+      "description": "SMS conversation metadata"
+    },
+    "/organizations/{orgId}/sms_conversations/{smsConvoId}/messages/{messageId}": {
+      "schema": "SMSMessage",
+      "description": "SMS messages sent to a patient"
+    }
+  }
+}
