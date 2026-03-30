@@ -375,7 +375,7 @@ export default function App() {
     try {
       const conversationId = [user.uid, officeProfile.uid].sort().join('_');
       const encrypted = encryptMessage(`Request: ${requestType}`, conversationId);
-      const orgId = profile.organizationId || 'pal-optical';
+      const orgId = profile?.organizationId || 'pal-optical';
       
       // Ensure conversation exists
       const convoDoc = await getDoc(doc(db, 'organizations', orgId, 'conversations', conversationId));
@@ -431,7 +431,7 @@ export default function App() {
     if (!user || !profile?.organizationId) return;
 
     const q = query(
-      collection(db, 'organizations', profile.organizationId, 'conversations'),
+      collection(db, 'organizations', profile?.organizationId || 'pal-optical', 'conversations'),
       where('participants', 'array-contains', user.uid),
       orderBy('updatedAt', 'desc')
     );
@@ -457,7 +457,7 @@ export default function App() {
       }
       setConversations(convos);
     }, (e) => {
-      handleFirestoreError(e, OperationType.LIST, `organizations/${profile.organizationId}/conversations`);
+      handleFirestoreError(e, OperationType.LIST, `organizations/${profile?.organizationId || 'pal-optical'}/conversations`);
     });
 
     return () => unsubscribe();
@@ -467,7 +467,7 @@ export default function App() {
     if (!user || !isStaff || !profile?.organizationId) return;
 
     const q = query(
-      collection(db, 'organizations', profile.organizationId, 'sms_conversations'),
+      collection(db, 'organizations', profile?.organizationId || 'pal-optical', 'sms_conversations'),
       orderBy('updatedAt', 'desc')
     );
 
@@ -477,7 +477,7 @@ export default function App() {
         .filter((c: any) => !c.deletedBy?.includes(user.uid));
       setSmsConversations(convos);
     }, (e) => {
-      handleFirestoreError(e, OperationType.LIST, `organizations/${profile.organizationId}/sms_conversations`);
+      handleFirestoreError(e, OperationType.LIST, `organizations/${profile?.organizationId || 'pal-optical'}/sms_conversations`);
     });
 
     return () => unsubscribe();
@@ -490,7 +490,7 @@ export default function App() {
     }
 
     const q = query(
-      collection(db, 'organizations', profile.organizationId, 'conversations', activeConversation.id, 'messages'),
+      collection(db, 'organizations', profile?.organizationId || 'pal-optical', 'conversations', activeConversation.id, 'messages'),
       orderBy('timestamp', 'asc'),
       limit(100)
     );
@@ -503,7 +503,7 @@ export default function App() {
       setMessages(msgs);
       scrollToBottom();
     }, (e) => {
-      handleFirestoreError(e, OperationType.LIST, `organizations/${profile.organizationId}/conversations/${activeConversation.id}/messages`);
+      handleFirestoreError(e, OperationType.LIST, `organizations/${profile?.organizationId || 'pal-optical'}/conversations/${activeConversation.id}/messages`);
     });
 
     return () => unsubscribe();

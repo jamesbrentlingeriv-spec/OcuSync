@@ -86,12 +86,12 @@ service cloud.firestore {
              data.phoneNumber is string &&
              data.smsConsent is bool &&
              data.organizationId is string &&
-             data.role in ['staff', 'patient', 'admin', 'superadmin'];
+             (data.role in ['staff', 'patient', 'admin', 'superadmin'] || data.role == '');
     }
 
     function isValidOrganization(data) {
-      return data.keys().hasAll(['id', 'name', 'assignedPhoneNumber']) &&
-             data.id is string && data.name is string && data.assignedPhoneNumber is string;
+      return data.keys().hasAll(['id', 'name', 'assignedPhoneNumber', 'groupCode']) &&
+             data.id is string && data.name is string && data.assignedPhoneNumber is string && data.groupCode is string;
     }
 
     function isValidConversation(orgId, data) {
