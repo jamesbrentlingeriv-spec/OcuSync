@@ -52,13 +52,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 opacity-30 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-400 rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-400 rounded-full blur-[120px]" />
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+        {/* Video Background */}
+        <div className="absolute inset-0 z-0">
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            className="w-full h-full object-cover opacity-40"
+          >
+            <source src="/ocusync.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/40 to-white" />
         </div>
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -89,39 +98,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
               >
                 Learn More
               </a>
-            </div>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="mt-20 relative max-w-5xl mx-auto"
-          >
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-white">
-              <video 
-                src="/ocusync.mp4" 
-                autoPlay 
-                loop 
-                muted 
-                playsInline
-                className="w-full h-auto"
-              />
-            </div>
-            {/* Floating UI Elements */}
-            <div className="absolute -top-10 -left-10 hidden lg:block p-6 bg-white rounded-2xl shadow-xl border border-slate-100 max-w-[240px]">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                  <CheckCircle2 className="w-6 h-6" />
-                </div>
-                <div className="text-left">
-                  <div className="text-xs font-bold text-slate-400 uppercase">Status</div>
-                  <div className="text-sm font-bold text-slate-900">Patient Verified</div>
-                </div>
-              </div>
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full w-full bg-green-500" />
-              </div>
             </div>
           </motion.div>
         </div>
@@ -214,7 +190,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
               <div className="hidden lg:block p-20">
                 <div className="relative aspect-square bg-slate-800/50 rounded-full border border-slate-700 flex items-center justify-center">
                   <div className="absolute inset-0 border-2 border-dashed border-slate-700 rounded-full animate-[spin_20s_linear_infinite]" />
-                  <Lock className="w-32 h-32 text-blue-500" />
+                  <div className="w-48 h-48 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl">
+                    <img src="/ocu-sync.png" alt="Logo" className="w-32 h-32 object-contain" referrerPolicy="no-referrer" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -225,6 +203,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
       {/* CTA Section */}
       <section className="py-24 text-center">
         <div className="max-w-4xl mx-auto px-4">
+          <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-blue-50 border border-slate-100">
+            <img src="/ocu-sync.png" alt="Logo" className="w-16 h-16 object-contain" referrerPolicy="no-referrer" />
+          </div>
           <h2 className="text-4xl lg:text-6xl font-bold text-slate-900 mb-8">Ready to Transform Your Practice?</h2>
           <p className="text-xl text-slate-600 mb-12">Join hundreds of healthcare providers who trust OCU-SYNC for their daily communication needs.</p>
           <a 

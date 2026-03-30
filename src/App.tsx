@@ -516,8 +516,13 @@ export default function App() {
   const handleLogin = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed', error);
+      if (error.code === 'auth/unauthorized-domain') {
+        alert('Login failed: This domain is not authorized in the Firebase Console. Please add your GoDaddy domain to the "Authorized Domains" list in Firebase Authentication settings.');
+      } else {
+        alert('Login failed: ' + (error.message || 'Unknown error'));
+      }
     }
   };
 
@@ -913,15 +918,34 @@ export default function App() {
 
   if (showSplash) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center p-4">
-        <div className="w-full max-w-lg aspect-square flex items-center justify-center">
-          <img 
-            src="/ocusync.gif" 
-            alt="OCU-SYNC Loading..." 
-            className="w-full h-full object-contain" 
-            referrerPolicy="no-referrer"
-          />
-        </div>
+      <div className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.1 }}
+          className="flex flex-col items-center gap-8"
+        >
+          <div className="relative w-48 h-48 flex items-center justify-center">
+            <img 
+              src="/ocusync.gif" 
+              alt="Loading..." 
+              className="absolute inset-0 w-full h-full object-contain" 
+              referrerPolicy="no-referrer"
+            />
+            <img 
+              src="/ocu-sync.png" 
+              alt="OCU-SYNC Logo" 
+              className="relative w-20 h-20 object-contain z-10" 
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-slate-900 tracking-tight mb-2">OCU-SYNC</div>
+            <div className="text-blue-600 font-bold tracking-[0.2em] text-[10px] uppercase animate-pulse">
+              Initializing Secure Sync...
+            </div>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -941,14 +965,27 @@ export default function App() {
   // Pending Approval View
   if (user && profile && !profile.isApproved && !isAdmin) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50 p-4">
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50 relative overflow-hidden p-4">
+        {/* Background Video */}
+        <div className="absolute inset-0 z-0 opacity-10">
+          <video 
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src="/ocusync.mp4" type="video/mp4" />
+          </video>
+        </div>
+
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl border border-slate-100 text-center"
+          className="relative z-10 max-w-md w-full bg-white p-8 rounded-3xl shadow-xl border border-slate-100 text-center"
         >
-          <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600">
-            <Clock className="w-12 h-12" />
+          <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-100 border border-slate-100">
+            <img src="/ocu-sync.png" alt="Logo" className="w-16 h-16 object-contain" referrerPolicy="no-referrer" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mb-4">Account Pending Approval</h1>
           <p className="text-slate-600 mb-8 leading-relaxed">
@@ -1167,8 +1204,8 @@ export default function App() {
                     className="w-full p-4 bg-blue-600 hover:bg-blue-700 border border-blue-500 rounded-xl text-left transition-all flex items-center justify-between group shadow-lg shadow-blue-100"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white">
-                        <MessageSquare className="w-5 h-5" />
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-blue-400">
+                        <img src="/ocu-sync.png" alt="Logo" className="w-6 h-6 object-contain" referrerPolicy="no-referrer" />
                       </div>
                       <span className="font-bold text-white">Are my eyeglasses ready?</span>
                     </div>
@@ -1643,8 +1680,8 @@ export default function App() {
                 <button onClick={() => setView('chat')} className="md:hidden p-2 -ml-2 text-slate-400">
                   <ArrowLeft className="w-5 h-5" />
                 </button>
-                <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
-                  <UserIcon className="w-6 h-6" />
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100">
+                  <img src="/ocu-sync.png" alt="Logo" className="w-6 h-6 object-contain" referrerPolicy="no-referrer" />
                 </div>
                 <div>
                   <div className="font-bold text-slate-900">Patient SMS Portal</div>
@@ -1765,8 +1802,10 @@ export default function App() {
           <div className="flex-1 overflow-y-auto p-4 bg-slate-50">
             <div className="max-w-4xl mx-auto">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                  <Shield className="w-6 h-6 text-blue-600" />
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm border border-slate-100">
+                    <img src="/ocu-sync.png" alt="Logo" className="w-5 h-5 object-contain" referrerPolicy="no-referrer" />
+                  </div>
                   Admin Dashboard
                 </h2>
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
@@ -2104,8 +2143,8 @@ export default function App() {
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-              <MessageSquare className="w-10 h-10 text-slate-200" />
+            <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-blue-50 border border-slate-100">
+              <img src="/ocu-sync.png" alt="Logo" className="w-16 h-16 object-contain" referrerPolicy="no-referrer" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Select a Conversation</h2>
             <p className="text-slate-500 max-w-xs">
